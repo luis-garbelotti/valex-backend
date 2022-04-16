@@ -53,7 +53,7 @@ function generateCardName(fullname: string): string {
 
 function generateCardCVV(): string {
     const cvv: string = faker.finance.creditCardCVV();
-
+    
     const hashCVV: string = hashDataUtils.hashData(cvv);
 
     return hashCVV;
@@ -65,4 +65,52 @@ function generateExpirationDate(): string {
 
 export async function insertCard(cardData: cardRepository.CardInsertData) {
     await cardRepository.insert(cardData);
+}
+
+export async function activateCard(cardId: number, securityCode: string, password: string) {
+    const card: cardRepository.CardInsertData = await findCardById(cardId);
+    verifyExpirationDate(card.expirationDate);
+    isActivated(card.password);
+    verifySecurityCode(securityCode, card.securityCode);
+    const hashPassword: string = hashDataUtils.hashData(password);
+    
+    card.password = hashPassword;
+    
+    await cardRepository.update(cardId, card)
+}
+
+async function findCardById(cardId: number) {
+    const hasCard: cardRepository.Card = await cardRepository.findById(cardId);
+
+    if (!hasCard) {
+        throw { type: "Not_Found" }
+    }
+    
+    return hasCard;
+}
+
+function verifyExpirationDate(expirationDate: string) {
+    const today = dayjs().format('MM/YY')
+
+    if (today > expirationDate) {
+        throw { type: "Conflict" }
+    }
+}
+
+function isActivated(password: string) {
+    if(password !== null) {
+        throw {
+            type: "Conflict"
+        }
+    }
+}
+
+function verifySecurityCode(securityCode: string, securityCodeHashed: string){
+    const correctCvv = hashDataUtils.compareHashData(securityCode, securityCodeHashed)
+
+    if(!correctCvv) {
+        throw {
+            type: "Unauthorized"
+        }
+    }
 }

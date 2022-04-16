@@ -6,3 +6,8 @@ export function hashData(data: string): string {
     return dataHashed;
 }
 
+export function compareHashData(data: string, dataHashed: string): boolean {
+    const dataCompared = bcrypt.compareSync(data, dataHashed);
+
+    return dataCompared
+}
