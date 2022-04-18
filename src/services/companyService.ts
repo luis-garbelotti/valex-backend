@@ -9,3 +9,7 @@ export async function findCompanyByApiKey(apiKey: string) {
     
     return company;
 }
+
+export async function findCompanyById(business: number) {
+    
+}

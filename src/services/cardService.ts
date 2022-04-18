@@ -1,7 +1,8 @@
-import * as cardRepository from "../repositories/cardRepository.js";
 import { faker } from '@faker-js/faker';
 import dayjs from "dayjs";
+import * as cardRepository from "../repositories/cardRepository.js";
 import * as hashDataUtils from "../utils/hashDataUtils.js";
+import * as rechargeRepository from '../repositories/rechargeRepository.js';
 
 export async function verifyDuplicatedCardType(cardType: cardRepository.TransactionTypes, employeeId: number) {
 
@@ -76,11 +77,12 @@ export async function activateCard(cardId: number, securityCode: string, passwor
     
     card.password = hashPassword;
     
-    await cardRepository.update(cardId, card)
+    await cardRepository.update(cardId, card);
+
 }
 
-async function findCardById(cardId: number) {
-    const hasCard: cardRepository.Card = await cardRepository.findById(cardId);
+export async function findCardById(cardId: number) {
+    const hasCard: cardRepository.CardInsertData = await cardRepository.findById(cardId);
 
     if (!hasCard) {
         throw { type: "Not_Found" }
@@ -89,7 +91,7 @@ async function findCardById(cardId: number) {
     return hasCard;
 }
 
-function verifyExpirationDate(expirationDate: string) {
+export function verifyExpirationDate(expirationDate: string) {
     const today = dayjs().format('MM/YY')
 
     if (today > expirationDate) {
@@ -113,4 +115,10 @@ function verifySecurityCode(securityCode: string, securityCodeHashed: string){
             type: "Unauthorized"
         }
     }
+}
+
+export async function rechargeCardById(cardId: number, amount: number) {
+    const card: cardRepository.CardInsertData = await findCardById(cardId);
+    verifyExpirationDate(card.expirationDate);
+    await rechargeRepository.insert({ cardId, amount });
 }
